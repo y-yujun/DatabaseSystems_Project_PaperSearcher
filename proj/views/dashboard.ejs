@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <form action="/delete-account" method="POST">
+        <button type="submit" class="login-btn" onclick="return confirm('Are you sure you want to delete your account?')">Delete
+            Account</button>
+    </form>
+    <button class="signup-btn" onclick="window.location.href = '/';">Main Page</button>
+    <div class="container mt-4">
+        <h1>Hello, <%= name %>
+        </h1>
+        <h2>Papers Saved:</h2>
+        <!-- <ul>
+            <% papers.forEach(function(paper) { %>
+                <li>
+                    <%= paper.paperId %>
+                </li>
+                <% }); %>
+        </ul> -->
+        <ul>
+            <% papers.forEach(function(paper) { %>
+                <li>
+                    <!-- TODO: trigger, pass recentAddDate -->
+                    <a href="#" onclick="openModal('<%= paper.recent_add_date %>',
+                                                    '<%= paper.paperId %>',
+                                                    '<%= paper.title %>',
+                                                    '<%= paper.author_name %>',
+                                                    '<%= paper.published_date %>',
+                                                    '<%= paper.abstract %>',
+                                                    '<%= paper.rating %>',
+                                                    '<%= paper.notes %>',
+                                                    '<%= paper.userId %>')">
+                        <%= paper.title %>
+                    </a>
+                </li>
+                <% }); %>
+        </ul>
+
+        <div id="paperModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Paper Details</h2>
+                <div id="paperDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateRatingFun(paperId, userId, newRating) {
+            $.ajax({
+                url: '/update-rating',
+                method: 'POST',
+                data: { paperId: paperId, userId: userId, rating: newRating },
+                success: function (response) {
+                    alert('Rating updated successfully');
+                },
+                error: function () {
+                    alert('Failed to update rating');
+                }
+            });
+        }
+
+        function updateNotesFun(paperId, userId, newNotes) {
+            $.ajax({
+                url: '/update-notes',
+                method: 'POST',
+                data: { paperId: paperId, userId: userId, notes: newNotes },
+                success: function (response) {
+                    alert('Notes updated successfully');
+                },
+                error: function () {
+                    alert('Failed to update notes');
+                }
+            });
+        }
+
+
+        // TODO: trigger
+        function openModal(recentAddDate, paperId, title, authors, published_date, abstract, rating, notes, userId) {
+            // function openModal(paperId, title, authors, published_date, abstract, rating, notes, userId) {
+            var modal = document.getElementById("paperModal");
+            var paperDetails = document.getElementById("paperDetails");
+
+            var ratingInput = `<input type="number" id="ratingInput" value="${rating || ''}" min="0" max="5">`;
+            var notesInput = `<textarea id="notesInput">${notes || ''}</textarea>`;
+
+            // TODO: trigger, show add date
+            var detailsHTML = `
+        <p><strong>Date Added:</strong> ${recentAddDate}</p>
+        <p><strong>Paper ID:</strong> ${paperId}</p>
+        <p><strong>Title:</strong> ${title}</p>
+        <p><strong>Author:</strong> ${authors}</p>
+        <p><strong>Published Date:</strong> ${published_date}</p>
+        <p><strong>Abstract:</strong> ${abstract}</p>
+        <p><strong>Rating:</strong> ${ratingInput}<button id="updateRating" class="btn btn-info mt-3">Update</button></p>
+        <p><strong>Notes:</strong> ${notesInput}<button id="updateNotes" class="btn btn-info mt-3">Update</button></p>
+        <button onclick="removeSavedPaper('${paperId}', '${userId}')">Remove Saved Paper</button>
+    `;
+
+            paperDetails.innerHTML = detailsHTML;
+            modal.style.display = "block";
+
+            var updateRating = document.getElementById("updateRating");
+            updateRating.addEventListener("click", function () {
+                var newRating = document.getElementById("ratingInput").value;
+                console.log(newRating);
+                updateRatingFun(paperId, userId, newRating);
+            });
+            var updateNotes = document.getElementById("updateNotes");
+            updateNotes.addEventListener("click", function () {
+                var newNotes = document.getElementById("notesInput").value;
+                console.log(newNotes);
+                updateNotesFun(paperId, userId, newNotes);
+            });
+
+        };
+
+        function closeModal() {
+            var modal = document.getElementById("paperModal");
+            modal.style.display = "none";
+        };
+
+        function removeSavedPaper(paperId, userId) {
+            $.ajax({
+                url: '/remove-saved-paper',
+                method: 'POST',
+                data: { paperId: paperId, userId: userId },
+                success: function (response) {
+                    alert('Paper removed successfully');
+                },
+                error: function () {
+                    alert('Failed to remove the saved paper');
+                }
+            });
+        };
+
+
+    </script>
+
+    <script>
+        // $(document).ready(function () {
+        //     $('#ratingInput').on('change', function () {
+        //         var newRating = $(this).val();
+        //         console.log(newRating);
+        //         updateRating(paperId, userId, newRating);
+        //     });
+
+        //     $('#notesInput').on('change', function () {
+        //         var newNotes = $(this).val();
+        //         console.log(newNotes);
+        //         updateNotes(paperId, userId, newNotes);
+        //     });
+        // });
+    </script>
+</body>
+
+
+</html>

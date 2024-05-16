@@ -1,0 +1,39 @@
+CREATE PROCEDURE CalculateAverageRating()
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE varPaperId VARCHAR(64);
+    DECLARE varAvgRating INT;
+    DECLARE varStatus VARCHAR(50);
+    DECLARE cur CURSOR FOR (SELECT paperId, AVG(Rating) as AvgRating
+                            FROM UserPaper
+                            GROUP BY paperId);
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    DECLARE exit handler FOR SQLEXCEPTION, SQLWARNING
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    START TRANSACTION;
+    DROP TABLE IF EXISTS Ratings;
+    CREATE TABLE Ratings(
+        paperId VARCHAR(64) PRIMARY KEY,
+    avgRating DECIMAL,
+        ratingStatus VARCHAR(50),
+    FOREIGN KEY (paperId) REFERENCES Paper(id) ON DELETE CASCADE
+    );
+    OPEN cur;
+    REPEAT
+        FETCH cur INTO varPaperId, varAvgRating;  
+        IF varAvgRating > 4.0 THEN
+            SET varStatus = 1;
+        ELSEIF varAvgRating > 3.0 THEN
+            SET varStatus = 2;
+        ELSE
+            SET varStatus = 3;
+        END IF;  
+        INSERT IGNORE INTO Ratings VALUES (varPaperId, varAvgRating, varStatus); 
+    UNTIL done
+    END REPEAT;  
+    CLOSE cur;
+    COMMIT;
+END

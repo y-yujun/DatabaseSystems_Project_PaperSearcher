@@ -1,0 +1,8 @@
+CREATE TRIGGER UpdateRecentAddDate
+AFTER INSERT ON UserPaper
+FOR EACH ROW
+BEGIN
+    UPDATE Paper
+    SET recent_add_date = CURDATE()
+    WHERE id = new.paperId;
+END;
